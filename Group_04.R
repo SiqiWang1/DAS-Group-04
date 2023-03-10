@@ -47,6 +47,28 @@ ggpairs(hosehold_num)
 # 
 # scaled_household <- cbind(hosehold_cat,scaled_vars,household$Total.Number.of.Family.members)
 
+
+###################       Boxplot      ###################
+p1<-ggplot(data = household, mapping = aes(x = Household.Head.Sex, y = Total.Number.of.Family.members)) +
+  geom_boxplot(aes(fill =Household.Head.Sex ) )+
+  labs(x = "Sex", y = "Total.Number.of.Family.member",
+       title = "gender")  + 
+  scale_x_discrete(labels = c("female","male"))
+
+p2<-ggplot(data = household, mapping = aes(x = Type.of.Household, y = Total.Number.of.Family.members)) +
+  geom_boxplot(aes(fill =Type.of.Household ) )+
+  labs(x = "tyoe of household", y = "Total.Number.of.Family.member",
+       title = "type")  + 
+  scale_x_discrete(labels = c("extend","single","two or more"))
+
+p3<-ggplot(data = household, mapping = aes(x = Electricity, y = Total.Number.of.Family.members)) +
+  geom_boxplot(aes(fill =Electricity ) )+
+  labs(x = "Electricity", y = "Total.Number.of.Family.member",
+       title = "Electricity")  + 
+  scale_x_discrete(labels = c("no","yes"))
+
+grid.arrange(p1, p2, p3, nrow=2, ncol = 2)
+
 ###################   check on categorical date    ###################
 household %>% 
   tabyl(Total.Number.of.Family.members,Household.Head.Sex) %>% 
@@ -72,7 +94,7 @@ H3 <- ggplot(household, aes(x= Total.Number.of.Family.members,  y = ..prop.., gr
 
 grid.arrange(H1, H2, H3, ncol=1)
 
-###################   check on categorical date    ###################
+###################   model fitting   ###################
 
 m1 <- glm(formula = Total.Number.of.Family.members ~ Total.Household.Income + Total.Food.Expenditure + 
       Household.Head.Sex + Household.Head.Age + Type.of.Household + House.Floor.Area +
@@ -84,7 +106,6 @@ m2 <- glm(formula = Total.Number.of.Family.members ~ Total.Food.Expenditure, fam
 summary(m1)
 summary(m2)
 
-###################   check on categorical data    ###################
 
 # Use BIC to do variable selection
 output <- bic.glm(Total.Number.of.Family.members ~ Total.Household.Income + Total.Food.Expenditure + 
@@ -99,8 +120,6 @@ m1.aic <- step(m1)
 # Use the StepAIC function to perform a stepwise regression
 # step.model.b <- stepAIC(m1, direction = "both")
 # summary(step.model.b)
-
-
 
 
 

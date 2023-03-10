@@ -11,5 +11,8 @@ library(corrplot)
 library(ggcorrplot)
 library(GGally)
 
-household <- read.csv("dataset4.csv")
+household <- read.csv("dataset4.csv") 
+household %>%
+skim()
+
 

@@ -32,7 +32,7 @@ hosehold_num_with_Y <- household[, sapply(household, is.numeric)]
 
 hist(household$Total.Number.of.Family.members)
 
-## Plot the Correlation Matrix
+# Plot the Correlation Matrix
 
 cor_matrix <- cor(scaled_vars) %>% #create the correlation matrix of variables
   round(2)

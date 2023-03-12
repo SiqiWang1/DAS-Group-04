@@ -25,6 +25,17 @@ colnames(household)
 
 hist(household$Total.Number.of.Family.members)
 
+# check the skewness and kurtosis results
+
+library(moments)
+skewness(household$Total.Number.of.Family.members)
+kurtosis(household$Total.Number.of.Family.members)
+
+#Based on the skewness and kurtosis results, we can determine that the distribution of "y" does not conform to the assumption of a strict Poisson distribution. 
+#Specifically, skewness values greater than 1 indicate that the data distribution is right-skewed, and kurtosis values greater than 3 indicate that the data distribution is sharper than the Poisson distribution.
+#In such cases, a Negative Binomial Distribution (NBD) regression model may be considered, as it can be fitted when a Poisson regression model is not up to the task. 
+
+
 #################### Plot the Correlation Matrix ####################
 
 # Simplified column names 
@@ -131,6 +142,14 @@ m1.aic <- step(m1)
 # summary(step.model.b)
 
 
+# Negative Binomial Distribution：
+library(MASS) 
+m1 <- glm.nb(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 
+            Householder_Age + Household_Type + Floorarea +
+            House.Age + Number_bedrooms + Electricity, data = household)
+summary(model)
+
+
 # Goodness-of-fit test
 chisq <- with(m1, sum((household$Number_Members- fitted.values)^2/fitted.values))
 df <- with(m1, df.residual)
@@ -139,10 +158,15 @@ cat("Chi-square test statistic = ", chisq, "\n")
 cat("df = ", df, "\n")
 cat("p-value = ", p, "\n")
 
+
+
 # The coef() function obtains the coefficients of the model.
 # The confint() function obtains the confidence interval of the model coefficients.
+
 exp(cbind(OR = coef(m1), confint(m1)))
 
+#The OR value is equal to the regression coefficient of the indexed variable. 
+#Specifically, if the coefficient of an explanatory variable in the regression model is b, its corresponding OR value is exp(b)
 
 
 

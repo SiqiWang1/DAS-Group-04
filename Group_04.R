@@ -142,11 +142,23 @@ output <- bic.glm(Number_Members ~ Income + FoodExp + Householder_Sex +
 summary(output)
 
 # Try AIC (please check later)
-# m1.aic <- step(m1)
+# m1.aic <- step(m1, direction = "forward"))
 
 # Use the StepAIC function to perform a stepwise regression
 # step.model.b <- stepAIC(m1, direction = "both")
 # summary(step.model.b)
+
+# # Perform forward selection
+# forward_model <- stepAIC(m2, direction = "forward")
+# 
+# # Perform backward elimination
+# backward_model <- stepAIC(m2, direction = "backward")
+# 
+# # Compare the models and select the final model
+# final_model <- ifelse(AIC(forward_model) < AIC(backward_model), forward_model, backward_model)
+# 
+# summary(backward_model)
+
 
 # Negative Binomial Distribution：
 m3 <- glm.nb(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 

@@ -1,29 +1,264 @@
 ---
 title: "glm"
-output: pdf_document
-date: "2023-03-10"
+author: "Siqi Wang, Yubin Lyu, Liting Wang, Han Xu, JIahao Mao"
+output:
+  pdf_document:
+    latex_engine: pdflatex
+    number_sections: no
+  html_document:
+    df_print: paged
+fig_caption: yes
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+options(scipen = 1, digits = 2) #set to two decimal
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE, comment = NA)
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r libraries}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(moderndive)
+library(gapminder)
+library(skimr)
+library(corrplot)
+library(ggcorrplot)
+library(GGally)
+library(janitor)
+library(gridExtra)
+library(MASS)
+library(BMA)
+library(moments)
 ```
 
-## Including Plots
+# Introduction
 
-You can also embed plots, for example:
+Some introductions
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+
+## Data Processing
+```{r data, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+household <- read.csv("dataset4.csv") 
+household$Electricity <- as.factor(household$Electricity)
+household$Household.Head.Sex <- as.factor(household$Household.Head.Sex)
+household$Type.of.Household <- as.factor(household$Type.of.Household)
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r rename, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+colnames(household)[1]<-"Income"             # original name "Total.Household.Income" 
+colnames(household)[3]<-"FoodExp"            # original name "Total.Food.Expenditure"   
+colnames(household)[4]<-"Householder_Sex"    # original name "Household.Head.Sex"
+colnames(household)[5]<-"Householder_Age"    # original name "Household.Head.Age"
+colnames(household)[6]<-"Household_Type"     # original name "Type.of.Household"
+colnames(household)[7]<-"Number_Members"     # original name "Total.Number.of.Family.members"
+colnames(household)[8]<-"Floorarea"          # original name "House.Floor.Area" 
+colnames(household)[10]<-"Number_bedrooms"   # original name "Number.of.bedrooms"
+```
+
+## Data Summary
+```{r skim, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+household %>%
+  skim()
+
+```
+
+# Distribution Check
+
+test if the distribution of y is poisson dist
+
+```{r pcheck, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+hist(household$Number_Members)
+
+```
+ 
+check the skewness and kurtosis results
+
+```{r nbcheck, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+skewness(household$Number_Members)
+kurtosis(household$Number_Members)
+
+```
+Based on the skewness and kurtosis results, we can determine that the distribution of "y" does not conform to the assumption of a strict Poisson distribution. 
+Specifically, skewness values greater than 1 indicate that the data distribution is right-skewed, and kurtosis values greater than 3 indicate that the data distribution is sharper than the Poisson distribution.
+In such cases, a Negative Binomial Distribution (NBD) regression model may be considered, as it can be fitted when a Poisson regression model is not up to the task. 
+
+
+# Correlation Matrix and GGpairs
+
+```{r correlation, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+household_num <- household[, sapply(household, is.numeric)]
+
+cor_matrix <- cor(household_num) %>% #create the correlation matrix of variables
+  round(2)
+cor_matrix
+
+corrplot <- corrplot(cor_matrix, method = "color", addCoef.col = "gray",type = "upper",)
+ggpairs(household_num)
+
+```
+# Boxplots of Variables
+
+```{r boxplot, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+p1<-ggplot(data = household, mapping = aes(x = Householder_Sex, y = Number_Members)) +
+  geom_boxplot(aes(fill =Householder_Sex ) )+
+  labs(x = "Householder_Sex", y = "Number_Members",
+       title = "gender")  + 
+  scale_x_discrete(labels = c("female","male"))
+
+p2<-ggplot(data = household, mapping = aes(x = Household_Type, y = Number_Members)) +
+  geom_boxplot(aes(fill = Household_Type))+
+  labs(x = "Household_Type", y = "Number_Members",title = "type") +
+  scale_x_discrete(labels = c("Extended", "Single", "Two or More"))
+
+p3<-ggplot(data = household, mapping = aes(x = Electricity, y = Number_Members)) +
+  geom_boxplot(aes(fill =Electricity ) )+
+  labs(x = "Electricity", y = "Number_Members",
+       title = "Electricity")  + 
+  scale_x_discrete(labels = c("no","yes"))
+
+grid.arrange(p1, p2, p3, nrow=3, ncol = 1)
+
+```
+# Histogram of Variables
+
+```{r histogram, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+household %>% 
+  tabyl(Number_Members, Householder_Sex) %>% 
+  adorn_percentages() %>% 
+  adorn_pct_formatting() %>% 
+  adorn_ns() # To show original counts
+
+# barplot of Number_Members and Householder_Sex
+H1 <- ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Householder_Sex, fill=Householder_Sex)) + 
+  geom_bar(position="dodge", stat="count") +
+  labs(y = "Proportion")
+
+# barplot of Number_Members and Electricity 
+H2 <- ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Electricity, fill=Electricity)) + 
+  geom_bar(position="dodge", stat="count") +
+  labs(y = "Proportion")
+
+# barplot of Number_Members and Household_Type
+H3 <- ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Household_Type, fill=Household_Type)) + 
+  geom_bar(position="dodge", stat="count") +
+  labs(y = "Proportion")
+
+grid.arrange(H1, H2, H3, ncol=1)
+
+```
+
+# Model Fitting
+
+```{r poissson, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+#model with all variables
+m1 <- glm(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 
+            Householder_Age + Household_Type + Floorarea +
+            House.Age + Number_bedrooms + Electricity, 
+          family = poisson(link = "log"), data = household)
+
+#model with log transformation of Income and FoodExp
+m2 <- glm(formula = Number_Members ~ log(Income) + log(FoodExp) + 
+            Householder_Age + Floorarea +
+            House.Age + Number_bedrooms, 
+          family = poisson(link = "log"), data = household)
+
+summary(m1)
+summary(m2)
+
+```
+
+## Use BIC to do variable selection
+
+```{r BIC, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+output <- bic.glm(Number_Members ~ Income + FoodExp + Householder_Sex + 
+                    Householder_Age + Household_Type + Floorarea +
+                    House.Age + Number_bedrooms + Electricity, 
+                   glm.family = "poisson" , data = household)
+summary(output)
+
+m3 <- glm(Number_Members ~ Income + FoodExp + Householder_Sex + 
+                    Householder_Age + Household_Type +
+                    House.Age + Number_bedrooms + Electricity, 
+                   family = "poisson" , data = household)
+summary(m3)
+    
+```
+
+## Negative Binomial Distribution
+```{r NB, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+m4 <- glm.nb(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 
+            Householder_Age + Household_Type + Floorarea +
+            House.Age + Number_bedrooms + Electricity, data = household)
+summary(m4)
+
+
+```
+
+# Deviance plots
+
+```{r assess, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+resp <- resid(m1, type = "pearson") 
+resd <- resid(m1, type = "deviance")
+r1<- ggplot(m1, aes(sample = resp)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
+r2<- ggplot(m1, aes(sample = resd)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
+r3<- ggplot(m1, aes(x = predict(m1, type="link"), y =resd))+ geom_point(col = "#7fc97f") +
+  ylab("Deviance residuals") + xlab("Linear predictor") 
+grid.arrange(r1, r2, r3, nrow = 1)
+
+resp2 <- resid(m2, type = "pearson") 
+resd2 <- resid(m2, type = "deviance")
+r4<- ggplot(m2, aes(sample = resp2)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
+r5<- ggplot(m2, aes(sample = resd2)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
+r6<- ggplot(m2, aes(x = predict(m2, type="link"), y =resd2))+ geom_point(col = "#7fc97f") +
+  ylab("Deviance residuals") + xlab("Linear predictor") 
+grid.arrange(r4, r5, r6, nrow = 1)
+```
+
+# Model Evaluation
+
+```{r assess, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+# Poisson model
+c(m1$deviance, m1$aic)
+# poission model with log transformation
+c(m2$deviance, m2$aic)
+# BIC model
+c(m3$deviance, m3$aic)
+# Negative binomial model
+c(m4$deviance, m4$aic)
+```
+
+# Goodness-of-fit test
+
+```{r assess, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+chisq <- with(m1, sum((household$Number_Members- fitted.values)^2/fitted.values))
+df <- with(m1, df.residual)
+p <- with(m1, pchisq(chisq, df, lower.tail = FALSE))
+cat("Chi-square test statistic = ", chisq, "\n")
+cat("df = ", df, "\n")
+cat("p-value = ", p, "\n")
+
+
+# The coef() function obtains the coefficients of the model.
+# The confint() function obtains the confidence interval of the model coefficients.
+
+exp(cbind(OR = coef(m1), confint(m1)))
+
+#The OR value is equal to the regression coefficient of the indexed variable. 
+#Specifically, if the coefficient of an explanatory variable in the regression model is b, its corresponding OR value is exp(b)
+
+
+```

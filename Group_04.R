@@ -12,14 +12,17 @@ library(janitor)
 library(gridExtra)
 library(MASS)
 library(BMA)
+library(moments)
 
 # skim the dataset
-household <- read.csv("dataset4.csv") 
-household %>%
-  skim()
+household <- read.csv("dataset4.csv")
 
 household$Electricity <- as.factor(household$Electricity)
-colnames(household)
+household$Household.Head.Sex <- as.factor(household$Household.Head.Sex)
+household$Type.of.Household <- as.factor(household$Type.of.Household)
+ 
+skim(household)
+
 
 # test if the distribution of y is poisson dist.
 
@@ -27,7 +30,6 @@ hist(household$Total.Number.of.Family.members)
 
 # check the skewness and kurtosis results
 
-library(moments)
 skewness(household$Total.Number.of.Family.members)
 kurtosis(household$Total.Number.of.Family.members)
 
@@ -57,16 +59,17 @@ cor_matrix
 
 corrplot <- corrplot(cor_matrix, method = "color", addCoef.col = "gray",type = "upper",)
 
-ggpairs(hosehold_num)
+ggpairs(household_num)
 
 # ### Scale the numerical variables
-# hosehold_cat <- household %>%
-#   select("Electricity","Household.Head.Sex","Type.of.Household")
+# household_cat <- household %>%
+#   dplyr::select("Electricity","Householder_Sex","Household_Type")
 # 
 # scaled_vars <- data.frame(scale(household_num)) %>%
-#   select(-Total.Number.of.Family.members)
-# 
-# scaled_household <- cbind(household_cat,scaled_vars,household$Total.Number.of.Family.members)
+#    dplyr::select(-Number_Members)
+#  
+# scaled_household <- cbind(household_cat,scaled_vars,household$Number_Members) %>%
+#   rename("Number_Members" ="household$Number_Members")
 
 
 ###################       Boxplot      ###################
@@ -116,16 +119,20 @@ grid.arrange(H1, H2, H3, ncol=1)
 
 ###################   model fitting   ###################
 
+#model with all variables
 m1 <- glm(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 
             Householder_Age + Household_Type + Floorarea +
             House.Age + Number_bedrooms + Electricity, 
           family = poisson(link = "log"), data = household)
 
-m2 <- glm(formula = Number_Members ~ FoodExp, family = poisson(link = "log"), data = household)
+#model with log transformation of Income and FoodExp
+m2 <- glm(formula = Number_Members ~ log(Income) + log(FoodExp) + 
+            Householder_Age + Floorarea +
+            House.Age + Number_bedrooms, 
+          family = poisson(link = "log"), data = household)
 
 summary(m1)
 summary(m2)
-
 
 # Use BIC to do variable selection
 output <- bic.glm(Number_Members ~ Income + FoodExp + Householder_Sex + 
@@ -135,20 +142,47 @@ output <- bic.glm(Number_Members ~ Income + FoodExp + Householder_Sex +
 summary(output)
 
 # Try AIC (please check later)
-m1.aic <- step(m1)
+# m1.aic <- step(m1)
 
 # Use the StepAIC function to perform a stepwise regression
 # step.model.b <- stepAIC(m1, direction = "both")
 # summary(step.model.b)
 
-
 # Negative Binomial Distribution：
-library(MASS) 
-m1 <- glm.nb(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 
+m3 <- glm.nb(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 
             Householder_Age + Household_Type + Floorarea +
             House.Age + Number_bedrooms + Electricity, data = household)
-summary(model)
+summary(m3)
 
+###################       deviance plots        ################
+
+resp <- resid(m1, type = "pearson") 
+resd <- resid(m1, type = "deviance")
+p1<- ggplot(m1, aes(sample = resp)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
+p2<- ggplot(m1, aes(sample = resd)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
+p3<- ggplot(m1, aes(x = predict(m1, type="link"), y =resd))+ geom_point(col = "#7fc97f") +
+  ylab("Deviance residuals") + xlab("Linear predictor") 
+grid.arrange(p1, p2, p3, nrow = 1)
+
+resp2 <- resid(m2, type = "pearson") 
+resd2 <- resid(m2, type = "deviance")
+p4<- ggplot(m2, aes(sample = resp2)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
+p5<- ggplot(m2, aes(sample = resd2)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
+p6<- ggplot(m2, aes(x = predict(m2, type="link"), y =resd2))+ geom_point(col = "#7fc97f") +
+  ylab("Deviance residuals") + xlab("Linear predictor") 
+grid.arrange(p4, p5, p6, nrow = 1)
+
+###################       model comparison    ################
+# Poisson model
+c(m1$deviance, m1$aic)
+# poission model with log transformation
+c(m2$deviance, m2$aic)
+# Negative binomial model
+c(m3$deviance, m3$aic)
+
+# BIC model
+c(output$deviance, output$bic)
+# [1]   1554.308   1564.441   1552.185   1567.734 -14631.513 -14629.041 -14625.976 -14625.748
 
 # Goodness-of-fit test
 chisq <- with(m1, sum((household$Number_Members- fitted.values)^2/fitted.values))
@@ -157,8 +191,6 @@ p <- with(m1, pchisq(chisq, df, lower.tail = FALSE))
 cat("Chi-square test statistic = ", chisq, "\n")
 cat("df = ", df, "\n")
 cat("p-value = ", p, "\n")
-
-
 
 # The coef() function obtains the coefficients of the model.
 # The confint() function obtains the confidence interval of the model coefficients.

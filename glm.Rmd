@@ -1,13 +1,7 @@
 ---
 title: "glm"
 author: "Siqi Wang, Yubin Lyu, Liting Wang, Han Xu, JIahao Mao"
-output:
-  pdf_document:
-    latex_engine: pdflatex
-    number_sections: no
-  html_document:
-    df_print: paged
-fig_caption: yes
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -31,6 +25,7 @@ library(gridExtra)
 library(MASS)
 library(BMA)
 library(moments)
+library(kableExtra)
 ```
 
 # Introduction
@@ -40,7 +35,6 @@ Some introductions
 
 ## Data Processing
 ```{r data, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
-
 household <- read.csv("dataset4.csv") 
 household$Electricity <- as.factor(household$Electricity)
 household$Household.Head.Sex <- as.factor(household$Household.Head.Sex)
@@ -62,10 +56,28 @@ colnames(household)[10]<-"Number_bedrooms"   # original name "Number.of.bedrooms
 
 ## Data Summary
 ```{r skim, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
-household %>%
-  skim()
+household_cat <- household %>%
+   dplyr::select("Electricity","Householder_Sex","Household_Type")
+summary(household_cat)
+
+household_num <- household[, sapply(household, is.numeric)]
+my_skim <- skim_with(base = sfl(n = length))
+household_num %>%
+  my_skim() %>%
+  transmute(Variable=skim_variable, n=n, 
+            Mean = format(signif(numeric.mean, 3), scientific = TRUE, digits = 2), 
+            SD = format(signif(numeric.sd, 3), scientific = TRUE, digits = 2),
+            Min= format(signif(numeric.p0, 3), scientific = TRUE, digits = 2), 
+            Median=format(signif(numeric.p50, 3), scientific = TRUE, digits = 2),  
+            Max=format(signif(numeric.p100, 3), scientific = TRUE, digits = 2), 
+            IQR = format(signif(numeric.p75-numeric.p50, 3), scientific = TRUE, digits = 2) ) %>%
+   kable(caption = '\\label{tab:summarybyskim} Summary statistics of variables',
+         booktabs = TRUE, linesep = "", digits = 2) %>%
+   kable_styling(font_size = 10, latex_options = "hold_position")
 
 ```
+
+
 
 # Distribution Check
 
@@ -93,8 +105,6 @@ In such cases, a Negative Binomial Distribution (NBD) regression model may be co
 # Correlation Matrix and GGpairs
 
 ```{r correlation, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
-
-household_num <- household[, sapply(household, is.numeric)]
 
 cor_matrix <- cor(household_num) %>% #create the correlation matrix of variables
   round(2)
@@ -209,7 +219,7 @@ summary(m4)
 
 # Deviance plots
 
-```{r assess, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+```{r deviance, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 resp <- resid(m1, type = "pearson") 
 resd <- resid(m1, type = "deviance")
 r1<- ggplot(m1, aes(sample = resp)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
@@ -229,7 +239,7 @@ grid.arrange(r4, r5, r6, nrow = 1)
 
 # Model Evaluation
 
-```{r assess, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+```{r model_evaluation, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 # Poisson model
 c(m1$deviance, m1$aic)
 # poission model with log transformation
@@ -242,7 +252,7 @@ c(m4$deviance, m4$aic)
 
 # Goodness-of-fit test
 
-```{r assess, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+```{r GOF, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 
 chisq <- with(m1, sum((household$Number_Members- fitted.values)^2/fitted.values))
 df <- with(m1, df.residual)

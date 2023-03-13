@@ -155,34 +155,32 @@ m3 <- glm.nb(formula = Number_Members ~ Income + FoodExp + Householder_Sex +
 summary(m3)
 
 ###################       deviance plots        ################
-
 resp <- resid(m1, type = "pearson") 
 resd <- resid(m1, type = "deviance")
-p1<- ggplot(m1, aes(sample = resp)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
-p2<- ggplot(m1, aes(sample = resd)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
-p3<- ggplot(m1, aes(x = predict(m1, type="link"), y =resd))+ geom_point(col = "#7fc97f") +
+r1<- ggplot(m1, aes(sample = resp)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
+r2<- ggplot(m1, aes(sample = resd)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
+r3<- ggplot(m1, aes(x = predict(m1, type="link"), y =resd))+ geom_point(col = "#7fc97f") +
   ylab("Deviance residuals") + xlab("Linear predictor") 
-grid.arrange(p1, p2, p3, nrow = 1)
+grid.arrange(r1, r2, r3, nrow = 1)
 
 resp2 <- resid(m2, type = "pearson") 
 resd2 <- resid(m2, type = "deviance")
-p4<- ggplot(m2, aes(sample = resp2)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
-p5<- ggplot(m2, aes(sample = resd2)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
-p6<- ggplot(m2, aes(x = predict(m2, type="link"), y =resd2))+ geom_point(col = "#7fc97f") +
+r4<- ggplot(m2, aes(sample = resp2)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
+r5<- ggplot(m2, aes(sample = resd2)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
+r6<- ggplot(m2, aes(x = predict(m2, type="link"), y =resd2))+ geom_point(col = "#7fc97f") +
   ylab("Deviance residuals") + xlab("Linear predictor") 
 grid.arrange(p4, p5, p6, nrow = 1)
 
 ###################       model comparison    ################
+
 # Poisson model
 c(m1$deviance, m1$aic)
 # poission model with log transformation
 c(m2$deviance, m2$aic)
 # Negative binomial model
 c(m3$deviance, m3$aic)
-
 # BIC model
 c(output$deviance, output$bic)
-# [1]   1554.308   1564.441   1552.185   1567.734 -14631.513 -14629.041 -14625.976 -14625.748
 
 # Goodness-of-fit test
 chisq <- with(m1, sum((household$Number_Members- fitted.values)^2/fitted.values))

@@ -120,24 +120,23 @@ ggpairs(household_num)
 
 ```{r boxplot, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 
-p1<-ggplot(data = household, mapping = aes(x = Householder_Sex, y = Number_Members)) +
+ggplot(data = household, mapping = aes(x = Householder_Sex, y = Number_Members)) +
   geom_boxplot(aes(fill =Householder_Sex ) )+
   labs(x = "Householder_Sex", y = "Number_Members",
        title = "gender")  + 
   scale_x_discrete(labels = c("female","male"))
 
-p2<-ggplot(data = household, mapping = aes(x = Household_Type, y = Number_Members)) +
+ggplot(data = household, mapping = aes(x = Household_Type, y = Number_Members)) +
   geom_boxplot(aes(fill = Household_Type))+
   labs(x = "Household_Type", y = "Number_Members",title = "type") +
-  scale_x_discrete(labels = c("Extended", "Single", "Two or More"))
+  scale_x_discrete(labels = c("Extended", "Single", "Two or More"))+
+  theme(legend.position = "bottom")
 
-p3<-ggplot(data = household, mapping = aes(x = Electricity, y = Number_Members)) +
+ggplot(data = household, mapping = aes(x = Electricity, y = Number_Members)) +
   geom_boxplot(aes(fill =Electricity ) )+
   labs(x = "Electricity", y = "Number_Members",
        title = "Electricity")  + 
   scale_x_discrete(labels = c("no","yes"))
-
-grid.arrange(p1, p2, p3, nrow=3, ncol = 1)
 
 ```
 # Histogram of Variables
@@ -151,21 +150,20 @@ household %>%
   adorn_ns() # To show original counts
 
 # barplot of Number_Members and Householder_Sex
-H1 <- ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Householder_Sex, fill=Householder_Sex)) + 
+ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Householder_Sex, fill=Householder_Sex)) + 
   geom_bar(position="dodge", stat="count") +
   labs(y = "Proportion")
 
 # barplot of Number_Members and Electricity 
-H2 <- ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Electricity, fill=Electricity)) + 
+ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Electricity, fill=Electricity)) + 
   geom_bar(position="dodge", stat="count") +
   labs(y = "Proportion")
 
 # barplot of Number_Members and Household_Type
-H3 <- ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Household_Type, fill=Household_Type)) + 
+ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Household_Type, fill=Household_Type)) + 
   geom_bar(position="dodge", stat="count") +
-  labs(y = "Proportion")
-
-grid.arrange(H1, H2, H3, ncol=1)
+  labs(y = "Proportion") +
+  theme(legend.position = "bottom")
 
 ```
 

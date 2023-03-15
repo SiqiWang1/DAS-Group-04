@@ -267,8 +267,9 @@ cat("p-value = ", p, "\n")
 
 exp(cbind(OR = coef(m1), confint(m1)))
 
-#The OR value is equal to the regression coefficient of the indexed variable. 
-#Specifically, if the coefficient of an explanatory variable in the regression model is b, its corresponding OR value is exp(b)
 
+#In Poisson regression, OR (odds ratio) represents the probability ratio (probability ratio) of a set of variables, which is the ratio of the probability of a dependent variable between the levels of two different independent variables. Usually, a larger value of OR means that a variable has a greater effect on the dependent variable. In exp(cbind(OR = coef(model), confint(model))), coef(model) gives the coefficients of all the variables and exp converts them to OR values.
+
+#The OR value is equal to the regression coefficient of the indexed variable. The coefficient of an explanatory variable (Householder_SexMale) in the regression model is 1.30, its corresponding OR value is exp(b).
 
 ```

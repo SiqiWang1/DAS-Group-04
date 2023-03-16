@@ -54,7 +54,7 @@ colnames(household)[6]<-"Household_Type"     # original name "Type.of.Household"
 colnames(household)[7]<-"Number_Members"     # original name "Total.Number.of.Family.members"
 colnames(household)[8]<-"Floorarea"          # original name "House.Floor.Area" 
 colnames(household)[10]<-"Number_bedrooms"   # original name "Number.of.bedrooms"
-household$Household_Type <- ifelse(household$Household_Type == "Two or More Nonrelated Persons/Members", "two or more", household$Household_Type)     # change the long type name "Two or More Nonrelated Persons/Members"
+household$Household_Type <- ifelse(household$Household_Type == "Two or More Nonrelated Persons/Members", "two or more", household$Household_Type)     # change the long type name "Two or More Unrelated Persons/Members"
 ```
 
 ## Data Summary

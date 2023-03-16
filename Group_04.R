@@ -26,15 +26,25 @@ skim(household)
 
 # test if the distribution of y is poisson dist.
 
-hist(household$Total.Number.of.Family.members)
+print(var(household$Total.Number.of.Family.members))
+# [1] 4.906328
+print(mean(household$Total.Number.of.Family.members))
+# [1] 4.532045
 
-# check the skewness and kurtosis results
+hist(household$Total.Number.of.Family.members, freq = FALSE, xlab = "Data", main = "Histogram of Number of Family members")
+# Overlay a Poisson probability mass function
+x <- 0:max(data)
+lines(x, dpois(x, lambda = 4), col = "red")
+
+# based on the plot we can see that the distribution follows poisson dist when lambda = 4
+
+#!!!conflict!!! check the skewness and kurtosis results 
 
 skewness(household$Total.Number.of.Family.members)
 kurtosis(household$Total.Number.of.Family.members)
 
-#Based on the skewness and kurtosis results, we can determine that the distribution of "y" does not conform to the assumption of a strict Poisson distribution. 
-#Specifically, skewness values greater than 1 indicate that the data distribution is right-skewed, and kurtosis values greater than 3 indicate that the data distribution is sharper than the Poisson distribution.
+#!!!Based on the skewness and kurtosis results, we can determine that the distribution of "y" does not conform to the assumption of a strict Poisson distribution. 
+#!!!!conflict!!!Specifically, skewness values greater than 1 indicate that the data distribution is right-skewed, and kurtosis values greater than 3 indicate that the data distribution is sharper than the Poisson distribution.
 #In such cases, a Negative Binomial Distribution (NBD) regression model may be considered, as it can be fitted when a Poisson regression model is not up to the task. 
 
 

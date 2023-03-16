@@ -80,29 +80,22 @@ household_num %>%
 ```
 
 
-
 # Distribution Check
 
 test if the distribution of y is poisson dist
 
 ```{r pcheck, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 
-hist(household$Number_Members)
+print(var(household$Total.Number.of.Family.members))
+print(mean(household$Total.Number.of.Family.members))
+
+hist(household$Total.Number.of.Family.members, freq = FALSE, xlab = "Data", main = "Histogram of Number of Family members")
+# Overlay a Poisson probability mass function
+x <- 0:max(household$Total.Number.of.Family.members)
+lines(x, dpois(x, lambda = 4), col = "red")
 
 ```
- 
-check the skewness and kurtosis results
-
-```{r nbcheck, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
-
-skewness(household$Number_Members)
-kurtosis(household$Number_Members)
-
-```
-Based on the skewness and kurtosis results, we can determine that the distribution of "y" does not conform to the assumption of a strict Poisson distribution. 
-Specifically, skewness values greater than 1 indicate that the data distribution is right-skewed, and kurtosis values greater than 3 indicate that the data distribution is sharper than the Poisson distribution.
-In such cases, a Negative Binomial Distribution (NBD) regression model may be considered, as it can be fitted when a Poisson regression model is not up to the task. 
-
+Based on the plot we can see that the distribution follows poisson dist when lambda = 4
 
 # Correlation Matrix and GGpairs
 
@@ -177,10 +170,11 @@ m1 <- glm(formula = Number_Members ~ Income + FoodExp + Householder_Sex +
             House.Age + Number_bedrooms + Electricity, 
           family = poisson(link = "log"), data = household)
 
+
 #model with log transformation of Income and FoodExp
-m2 <- glm(formula = Number_Members ~ log(Income) + log(FoodExp) + 
-            Householder_Age + Floorarea +
-            House.Age + Number_bedrooms, 
+m2 <- glm(formula = Number_Members ~ log(Income) + log(FoodExp) +Householder_Sex + 
+            Householder_Age + Household_Type + Floorarea +
+            House.Age + Number_bedrooms + Electricity, 
           family = poisson(link = "log"), data = household)
 
 summary(m1)
@@ -192,16 +186,17 @@ summary(m2)
 
 ```{r BIC, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 
-output <- bic.glm(Number_Members ~ Income + FoodExp + Householder_Sex + 
+output <- bic.glm(Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex + 
                     Householder_Age + Household_Type + Floorarea +
                     House.Age + Number_bedrooms + Electricity, 
                    glm.family = "poisson" , data = household)
+
 summary(output)
 
-m3 <- glm(Number_Members ~ Income + FoodExp + Householder_Sex + 
-                    Householder_Age + Household_Type +
-                    House.Age + Number_bedrooms + Electricity, 
-                   family = "poisson" , data = household)
+m3 <- glm(Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex + 
+            Householder_Age + Household_Type +
+            House.Age + Electricity, 
+          family = "poisson" , data = household)
 summary(m3)
     
 ```
@@ -209,11 +204,10 @@ summary(m3)
 ## Negative Binomial Distribution
 ```{r NB, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 
-m4 <- glm.nb(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 
+m4 <- glm.nb(formula = Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex + 
             Householder_Age + Household_Type + Floorarea +
             House.Age + Number_bedrooms + Electricity, data = household)
 summary(m4)
-
 
 ```
 

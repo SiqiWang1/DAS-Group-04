@@ -24,18 +24,18 @@ household$Type.of.Household <- as.factor(household$Type.of.Household)
 skim(household)
 
 
-# test if the distribution of y is poisson dist.
+# Test if the distribution of y is poisson dist.
+print(var(household$Total.Number.of.Family.members))
+# [1] 4.906328
+print(mean(household$Total.Number.of.Family.members))
+# [1] 4.532045
 
-hist(household$Total.Number.of.Family.members)
+hist(household$Total.Number.of.Family.members, freq = FALSE, xlab = "Data", main = "Histogram of Number of Family members")
+# Overlay a Poisson probability mass function
+x <- 0:max(data)
+lines(x, dpois(x, lambda = 4), col = "red")
 
-# check the skewness and kurtosis results
-
-skewness(household$Total.Number.of.Family.members)
-kurtosis(household$Total.Number.of.Family.members)
-
-#Based on the skewness and kurtosis results, we can determine that the distribution of "y" does not conform to the assumption of a strict Poisson distribution. 
-#Specifically, skewness values greater than 1 indicate that the data distribution is right-skewed, and kurtosis values greater than 3 indicate that the data distribution is sharper than the Poisson distribution.
-#In such cases, a Negative Binomial Distribution (NBD) regression model may be considered, as it can be fitted when a Poisson regression model is not up to the task. 
+# based on the plot we can see that the distribution follows poisson dist when lambda = 4
 
 
 #################### Plot the Correlation Matrix ####################
@@ -126,20 +126,36 @@ m1 <- glm(formula = Number_Members ~ Income + FoodExp + Householder_Sex +
           family = poisson(link = "log"), data = household)
 
 #model with log transformation of Income and FoodExp
-m2 <- glm(formula = Number_Members ~ log(Income) + log(FoodExp) + 
-            Householder_Age + Floorarea +
-            House.Age + Number_bedrooms, 
+m2 <- glm(formula = Number_Members ~ log(Income) + log(FoodExp) +Householder_Sex + 
+            Householder_Age + Household_Type + Floorarea +
+            House.Age + Number_bedrooms + Electricity, 
           family = poisson(link = "log"), data = household)
 
 summary(m1)
 summary(m2)
 
+# check on overdispersion
+deviance(m1)/df.residual(m1)
+deviance(m2)/df.residual(m2)
+
+ggplot(m1, aes(x=log(fitted(m2)), y=log((household$Number_Members-fitted(m2))^2)))+ 
+  geom_point(col="#f46d43") +
+  geom_abline(slope=1, intercept=0, col="#a6d96a", linewidth=1) + 
+  ylab(expression((y-hat(mu))^2)) + 
+  xlab(expression(hat(mu)))
+
+
 # Use BIC to do variable selection
-output <- bic.glm(Number_Members ~ Income + FoodExp + Householder_Sex + 
+output <- bic.glm(Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex + 
                     Householder_Age + Household_Type + Floorarea +
                     House.Age + Number_bedrooms + Electricity, 
                    glm.family = "poisson" , data = household)
 summary(output)
+
+bic <- glm(Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex + 
+            Householder_Age + Household_Type +
+            House.Age + Electricity, 
+          family = "poisson" , data = household)
 
 # Try AIC (please check later)
 # m1.aic <- step(m1, direction = "forward"))
@@ -158,7 +174,6 @@ summary(output)
 # final_model <- ifelse(AIC(forward_model) < AIC(backward_model), forward_model, backward_model)
 # 
 # summary(backward_model)
-
 
 # Negative Binomial Distribution：
 m3 <- glm.nb(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 
@@ -192,7 +207,7 @@ c(m2$deviance, m2$aic)
 # Negative binomial model
 c(m3$deviance, m3$aic)
 # BIC model
-c(output$deviance, output$bic)
+c(bic$deviance, bic$aic)
 
 # Goodness-of-fit test
 chisq <- with(m1, sum((household$Number_Members- fitted.values)^2/fitted.values))

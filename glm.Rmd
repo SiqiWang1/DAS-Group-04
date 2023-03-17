@@ -54,6 +54,7 @@ colnames(household)[6]<-"Household_Type"     # original name "Type.of.Household"
 colnames(household)[7]<-"Number_Members"     # original name "Total.Number.of.Family.members"
 colnames(household)[8]<-"Floorarea"          # original name "House.Floor.Area" 
 colnames(household)[10]<-"Number_bedrooms"   # original name "Number.of.bedrooms"
+household$Household_Type <- ifelse(household$Household_Type == "Two or More Nonrelated Persons/Members", "two or more", household$Household_Type)     # change the long type name "Two or More Unrelated Persons/Members"
 ```
 
 ## Data Summary
@@ -80,29 +81,22 @@ household_num %>%
 ```
 
 
-
 # Distribution Check
 
 test if the distribution of y is poisson dist
 
 ```{r pcheck, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 
-hist(household$Number_Members)
+print(var(household$Number_Members))
+print(mean(household$Number_Members))
+
+hist(household$Number_Members, freq = FALSE, xlab = "Data", main = "Histogram of Number of Family members")
+# Overlay a Poisson probability mass function
+x <- 0:max(household$Number_Members)
+lines(x, dpois(x, lambda = 4), col = "red")
 
 ```
- 
-check the skewness and kurtosis results
-
-```{r nbcheck, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
-
-skewness(household$Number_Members)
-kurtosis(household$Number_Members)
-
-```
-Based on the skewness and kurtosis results, we can determine that the distribution of "y" does not conform to the assumption of a strict Poisson distribution. 
-Specifically, skewness values greater than 1 indicate that the data distribution is right-skewed, and kurtosis values greater than 3 indicate that the data distribution is sharper than the Poisson distribution.
-In such cases, a Negative Binomial Distribution (NBD) regression model may be considered, as it can be fitted when a Poisson regression model is not up to the task. 
-
+Based on the plot we can see that the distribution follows poisson dist when lambda = 4
 
 # Correlation Matrix and GGpairs
 
@@ -177,10 +171,11 @@ m1 <- glm(formula = Number_Members ~ Income + FoodExp + Householder_Sex +
             House.Age + Number_bedrooms + Electricity, 
           family = poisson(link = "log"), data = household)
 
+
 #model with log transformation of Income and FoodExp
-m2 <- glm(formula = Number_Members ~ log(Income) + log(FoodExp) + 
-            Householder_Age + Floorarea +
-            House.Age + Number_bedrooms, 
+m2 <- glm(formula = Number_Members ~ log(Income) + log(FoodExp) +Householder_Sex + 
+            Householder_Age + Household_Type + Floorarea +
+            House.Age + Number_bedrooms + Electricity, 
           family = poisson(link = "log"), data = household)
 
 summary(m1)
@@ -192,16 +187,17 @@ summary(m2)
 
 ```{r BIC, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 
-output <- bic.glm(Number_Members ~ Income + FoodExp + Householder_Sex + 
+output <- bic.glm(Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex + 
                     Householder_Age + Household_Type + Floorarea +
                     House.Age + Number_bedrooms + Electricity, 
                    glm.family = "poisson" , data = household)
+
 summary(output)
 
-m3 <- glm(Number_Members ~ Income + FoodExp + Householder_Sex + 
-                    Householder_Age + Household_Type +
-                    House.Age + Number_bedrooms + Electricity, 
-                   family = "poisson" , data = household)
+m3 <- glm(Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex + 
+            Householder_Age + Household_Type +
+            House.Age + Electricity, 
+          family = "poisson" , data = household)
 summary(m3)
     
 ```
@@ -209,11 +205,10 @@ summary(m3)
 ## Negative Binomial Distribution
 ```{r NB, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 
-m4 <- glm.nb(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 
+m4 <- glm.nb(formula = Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex + 
             Householder_Age + Household_Type + Floorarea +
             House.Age + Number_bedrooms + Electricity, data = household)
 summary(m4)
-
 
 ```
 
@@ -267,8 +262,9 @@ cat("p-value = ", p, "\n")
 
 exp(cbind(OR = coef(m1), confint(m1)))
 
-#The OR value is equal to the regression coefficient of the indexed variable. 
-#Specifically, if the coefficient of an explanatory variable in the regression model is b, its corresponding OR value is exp(b)
 
+#In Poisson regression, OR (odds ratio) represents the probability ratio (probability ratio) of a set of variables, which is the ratio of the probability of a dependent variable between the levels of two different independent variables. Usually, a larger value of OR means that a variable has a greater effect on the dependent variable. In exp(cbind(OR = coef(model), confint(model))), coef(model) gives the coefficients of all the variables and exp converts them to OR values.
+
+#The OR value is equal to the regression coefficient of the indexed variable. The coefficient of an explanatory variable (Householder_SexMale) in the regression model is 1.30, its corresponding OR value is exp(b).
 
 ```

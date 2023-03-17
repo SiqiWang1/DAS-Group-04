@@ -1,7 +1,9 @@
 ---
 title: "group04"
 author: "Siqi Wang, Yubin Lyu, Liting Wang, Han Xu, JIahao Mao"
-output: pdf_document
+output: 
+  pdf_document: default
+  github_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -133,6 +135,8 @@ ggplot(data = household, mapping = aes(x = Electricity, y = Number_Members)) +
   scale_x_discrete(labels = c("no","yes"))
 
 ```
+
+
 # Histogram of Variables
 
 ```{r histogram, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
@@ -165,14 +169,14 @@ ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Household_Type, fi
 
 ```{r poissson, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
 
-#model with all variables
+#model1 with all variables
 m1 <- glm(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 
             Householder_Age + Household_Type + Floorarea +
             House.Age + Number_bedrooms + Electricity, 
           family = poisson(link = "log"), data = household)
 
 
-#model with log transformation of Income and FoodExp
+#model2 with log transformation of Income and FoodExp
 m2 <- glm(formula = Number_Members ~ log(Income) + log(FoodExp) +Householder_Sex + 
             Householder_Age + Household_Type + Floorarea +
             House.Age + Number_bedrooms + Electricity, 

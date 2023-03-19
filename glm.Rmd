@@ -1,9 +1,11 @@
 ---
 title: "Analysis of Factors Affecting Number of People in Household of Philippines"
 author: "Siqi Wang, Yubin Lyu, Liting Wang, Han Xu, Jiahao Mao"
-output: 
-  pdf_document: default
+output:
+  html_document:
+    df_print: paged
   github_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -172,7 +174,7 @@ ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Household_Type, fi
 
 # Model Fitting
 
-Since our response variable follows poisson distribution, we will use glm with poisson distribution to fit the model.
+Since our response variable follows poisson distribution, we will use glm with poisson distribution to fit the model.However, the regression coefficients for "household income" and "food expenditure" were found to be smaller than expected, possibly due to the large scale of these variables. To address this issue, a log transformation was applied to these variables, which effectively normalized their scale and improved the accuracy of the regression coefficients.
 
 ```{r poissson, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
 #model1 with all variables
@@ -195,7 +197,8 @@ summary(m2)
 
 ## Use BIC to do variable selection
 
-BIC is implemented to found the best fitting model.
+BIC is implemented to found the best fitting model. In the process of model selection, the posterior probability can be utilized to evaluate the impact of each explanatory variable on the response variable and to facilitate the selection of the best model.
+The results show that model 1 has the highest posterior probability of 0.61, suggesting that it is the most suitable model for explaining the response variable.
 
 ```{r BIC, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
 
@@ -280,9 +283,8 @@ cat("p-value = ", p, "\n")
 
 exp(cbind(OR = coef(m1), confint(m1)))
 
-
-#In Poisson regression, OR (odds ratio) represents the probability ratio (probability ratio) of a set of variables, which is the ratio of the probability of a dependent variable between the levels of two different independent variables. Usually, a larger value of OR means that a variable has a greater effect on the dependent variable. In exp(cbind(OR = coef(model), confint(model))), coef(model) gives the coefficients of all the variables and exp converts them to OR values.
-
-#The OR value is equal to the regression coefficient of the indexed variable. The coefficient of an explanatory variable (Householder_SexMale) in the regression model is 1.30, its corresponding OR value is exp(b).
-
 ```
+
+In Poisson regression, OR (odds ratio) represents the probability ratio (probability ratio) of a set of variables, which is the ratio of the probability of a dependent variable between the levels of two different independent variables. Usually, a larger value of OR means that a variable has a greater effect on the dependent variable. In exp(cbind(OR = coef(model), confint(model))), coef(model) gives the coefficients of all the variables and exp converts them to OR values.
+
+The OR value is equal to the regression coefficient of the indexed variable. The coefficient of an explanatory variable (Householder_SexMale) in the regression model is 1.30, its corresponding OR value is exp(b).

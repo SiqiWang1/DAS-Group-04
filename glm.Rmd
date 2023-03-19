@@ -1,6 +1,6 @@
 ---
-title: "group04"
-author: "Siqi Wang, Yubin Lyu, Liting Wang, Han Xu, JIahao Mao"
+title: "Analysis of Factors Affecting Number of People in Household of Philippines"
+author: "Siqi Wang, Yubin Lyu, Liting Wang, Han Xu, Jiahao Mao"
 output: 
   pdf_document: default
   github_document: default
@@ -38,16 +38,17 @@ In this analysis, we are interested in identifying which household-related facto
 
 
 ## Data Processing
-```{r data, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+```{r data, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
+# Load data
 household <- read.csv("dataset4.csv") 
+# Factorize the categorical variables
 household$Electricity <- as.factor(household$Electricity)
 household$Household.Head.Sex <- as.factor(household$Household.Head.Sex)
 household$Type.of.Household <- as.factor(household$Type.of.Household)
-
 ```
 
-```{r rename, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
-
+```{r rename, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
+# Simplified column names 
 colnames(household)[1]<-"Income"             # original name "Total.Household.Income" 
 colnames(household)[3]<-"FoodExp"            # original name "Total.Food.Expenditure"   
 colnames(household)[4]<-"Householder_Sex"    # original name "Household.Head.Sex"
@@ -60,11 +61,13 @@ household$Household_Type <- ifelse(household$Household_Type == "Two or More Nonr
 ```
 
 ## Data Summary
-```{r skim, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+```{r skim, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
+# Summary of Categorical Variables
 household_cat <- household %>%
    dplyr::select("Electricity","Householder_Sex","Household_Type")
 summary(household_cat)
 
+# Summary of Numerical Variables
 household_num <- household[, sapply(household, is.numeric)]
 my_skim <- skim_with(base = sfl(n = length))
 household_num %>%
@@ -79,43 +82,46 @@ household_num %>%
    kable(caption = '\\label{tab:summarybyskim} Summary statistics of variables',
          booktabs = TRUE, linesep = "", digits = 2) %>%
    kable_styling(font_size = 10, latex_options = "hold_position")
-
 ```
 
 
 # Distribution Check
 
-test if the distribution of y is poisson dist
+Test if the distribution of y follows the poisson distribution.
 
-```{r pcheck, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
-
+```{r pcheck, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
+# If a variable follows poisson distribution variance will equal to mean.
 print(var(household$Number_Members))
 print(mean(household$Number_Members))
 
-hist(household$Number_Members, freq = FALSE, xlab = "Data", main = "Histogram of Number of Family members")
+# As we can see there is no significant difference between mean and variance
+# Plot the histogram of response variable and compare it with poisson distribution.
+hist(household$Number_Members, freq = FALSE, xlab = "Data", 
+     main = "Histogram of Number of Family members")
 # Overlay a Poisson probability mass function
 x <- 0:max(household$Number_Members)
 lines(x, dpois(x, lambda = 4), col = "red")
-
 ```
 Based on the plot we can see that the distribution follows poisson dist when lambda = 4
 
-# Correlation Matrix and GGpairs
+# Correlation Matrix and ggpairs
 
-```{r correlation, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
-
-cor_matrix <- cor(household_num) %>% #create the correlation matrix of variables
+```{r correlation, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
+# Create the correlation matrix of variables
+cor_matrix <- cor(household_num) %>% 
   round(2)
 cor_matrix
 
 corrplot <- corrplot(cor_matrix, method = "color", addCoef.col = "gray",type = "upper",)
+# Create the ggpairs of variables
 ggpairs(household_num)
 
 ```
+
 # Boxplots of Variables
 
-```{r boxplot, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
-
+```{r boxplot, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE, out.width = '60%'}
+# Explanatory analysis on numeric variables
 ggplot(data = household, mapping = aes(x = Householder_Sex, y = Number_Members)) +
   geom_boxplot(aes(fill =Householder_Sex ) )+
   labs(x = "Householder_Sex", y = "Number_Members",
@@ -133,14 +139,13 @@ ggplot(data = household, mapping = aes(x = Electricity, y = Number_Members)) +
   labs(x = "Electricity", y = "Number_Members",
        title = "Electricity")  + 
   scale_x_discrete(labels = c("no","yes"))
-
 ```
 
 
 # Histogram of Variables
 
-```{r histogram, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
-
+```{r histogram, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE,out.width = '60%'}
+# Explanatory analysis on categorical variables
 household %>% 
   tabyl(Number_Members, Householder_Sex) %>% 
   adorn_percentages() %>% 
@@ -167,8 +172,9 @@ ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Household_Type, fi
 
 # Model Fitting
 
-```{r poissson, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+Since our response variable follows poisson distribution, we will use glm with poisson distribution to fit the model.
 
+```{r poissson, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
 #model1 with all variables
 m1 <- glm(formula = Number_Members ~ Income + FoodExp + Householder_Sex + 
             Householder_Age + Household_Type + Floorarea +
@@ -176,7 +182,7 @@ m1 <- glm(formula = Number_Members ~ Income + FoodExp + Householder_Sex +
           family = poisson(link = "log"), data = household)
 
 
-#model2 with log transformation of Income and FoodExp
+#model2 with log transformation for Income and FoodExp
 m2 <- glm(formula = Number_Members ~ log(Income) + log(FoodExp) +Householder_Sex + 
             Householder_Age + Household_Type + Floorarea +
             House.Age + Number_bedrooms + Electricity, 
@@ -189,7 +195,9 @@ summary(m2)
 
 ## Use BIC to do variable selection
 
-```{r BIC, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+BIC is implemented to found the best fitting model.
+
+```{r BIC, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
 
 output <- bic.glm(Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex + 
                     Householder_Age + Household_Type + Floorarea +
@@ -198,6 +206,7 @@ output <- bic.glm(Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex 
 
 summary(output)
 
+# Name the best model selected by BIC m3
 m3 <- glm(Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex + 
             Householder_Age + Household_Type +
             House.Age + Electricity, 
@@ -207,7 +216,10 @@ summary(m3)
 ```
 
 ## Negative Binomial Distribution
-```{r NB, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+
+The variance(4.9) of y is slightly larger than the mean(4.5) of y, therefore a Negative Binomial Distribution model is fitted to reduce the issue of overdispersion.  
+
+```{r NB, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
 
 m4 <- glm.nb(formula = Number_Members ~ log(Income) + log(FoodExp) + Householder_Sex + 
             Householder_Age + Household_Type + Floorarea +
@@ -218,7 +230,9 @@ summary(m4)
 
 # Deviance plots
 
-```{r deviance, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+Deviance plots is shown below.
+
+```{r deviance, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
 resp <- resid(m1, type = "pearson") 
 resd <- resid(m1, type = "deviance")
 r1<- ggplot(m1, aes(sample = resp)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
@@ -238,7 +252,7 @@ grid.arrange(r4, r5, r6, nrow = 1)
 
 # Model Evaluation
 
-```{r model_evaluation, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+```{r model_evaluation, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
 # Poisson model
 c(m1$deviance, m1$aic)
 # poission model with log transformation
@@ -251,7 +265,7 @@ c(m4$deviance, m4$aic)
 
 # Goodness-of-fit test
 
-```{r GOF, echo = FALSE, eval = TRUE, warning = FALSE, message = FALSE}
+```{r GOF, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
 
 chisq <- with(m1, sum((household$Number_Members- fitted.values)^2/fitted.values))
 df <- with(m1, df.residual)

@@ -2,10 +2,10 @@
 title: "Analysis of Factors Affecting Number of People in Household of Philippines"
 author: "Siqi Wang, Yubin Lyu, Liting Wang, Han Xu, Jiahao Mao"
 output:
+  pdf_document: default
+  github_document: default
   html_document:
     df_print: paged
-  github_document: default
-  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}

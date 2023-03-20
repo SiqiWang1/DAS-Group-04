@@ -61,8 +61,7 @@ colnames(household)[7]<-"Number_Members"     # original name "Total.Number.of.Fa
 colnames(household)[8]<-"Floorarea"          # original name "House.Floor.Area" 
 colnames(household)[10]<-"Number_bedrooms"   # original name "Number.of.bedrooms"
 # change the long type name "Two or More Unrelated Persons/Members"
-household$Household_Type <- ifelse(household$Household_Type == "Two or More Nonrelated Persons/Members", 
-                                   "two or more",household$Household_Type)     
+household$Household_Type <- ifelse(household$Household_Type == "Two or More Nonrelated Persons/Members", "two or more",household$Household_Type)     
 
 ```
 
@@ -93,22 +92,22 @@ household_num %>%
 
 # Distribution Check
 
-Test if the distribution of y follows the poisson distribution.
+Test if y follows the poisson distribution.
 
 ```{r pcheck, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
-# If a variable follows poisson distribution variance will equal to mean.
+# check if the variable follows poisson distribution by testing if the variance equals to the mean
 print(var(household$Number_Members))
 print(mean(household$Number_Members))
 
 # As we can see there is no significant difference between mean and variance
-# Plot the histogram of response variable and compare it with poisson distribution.
+# Plot the histogram of response variable and compare it with poisson distribution
 hist(household$Number_Members, freq = FALSE, xlab = "Data", 
      main = "Histogram of Number of Family members")
 # Overlay a Poisson probability mass function
 x <- 0:max(household$Number_Members)
 lines(x, dpois(x, lambda = 4), col = "red")
 ```
-Based on the plot we can see that the distribution follows poisson dist when lambda = 4
+From the plot it can be seen that the number of members in a household follows a poisson distribution with lambda = 4.
 
 # Correlation Matrix and ggpairs
 
@@ -181,7 +180,7 @@ ggplot(household,
 
 # Model Fitting
 
-Since our response variable follows poisson distribution, we will use glm with poisson distribution to fit the model.However, the regression coefficients for "household income" and "food expenditure" were found to be smaller than expected, possibly due to the large scale of these variables. To address this issue, a log transformation was applied to these variables, which effectively normalized their scale and improved the accuracy of the regression coefficients.
+Since our response variable follows poisson distribution, it seems reasonable to use GLM with poisson distribution to fit the model. However, the regression coefficients for "household income" and "food expenditure" were found to be smaller than expected, possibly due to the large scale of these variables. To address this issue, a log transformation was taken on these variables, which effectively normalized their scale and improved the accuracy of the regression coefficients.
 
 ```{r poissson, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
 #model1 with all variables

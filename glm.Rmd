@@ -60,7 +60,10 @@ colnames(household)[6]<-"Household_Type"     # original name "Type.of.Household"
 colnames(household)[7]<-"Number_Members"     # original name "Total.Number.of.Family.members"
 colnames(household)[8]<-"Floorarea"          # original name "House.Floor.Area" 
 colnames(household)[10]<-"Number_bedrooms"   # original name "Number.of.bedrooms"
-household$Household_Type <- ifelse(household$Household_Type == "Two or More Nonrelated Persons/Members", "two or more", household$Household_Type)     # change the long type name "Two or More Unrelated Persons/Members"
+# change the long type name "Two or More Unrelated Persons/Members"
+household$Household_Type <- ifelse(household$Household_Type == "Two or More Nonrelated Persons/Members", 
+                                   "two or more",household$Household_Type)     
+
 ```
 
 ## Data Summary
@@ -239,18 +242,25 @@ Deviance plots is shown below.
 ```{r deviance, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
 resp <- resid(m1, type = "pearson") 
 resd <- resid(m1, type = "deviance")
-r1<- ggplot(m1, aes(sample = resp)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
-r2<- ggplot(m1, aes(sample = resd)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
-r3<- ggplot(m1, aes(x = predict(m1, type="link"), y =resd))+ geom_point(col = "#7fc97f") +
+r1<- ggplot(m1, aes(sample = resp)) + 
+  geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
+r2<- ggplot(m1, aes(sample = resd)) + 
+  geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
+r3<- ggplot(m1, aes(x = predict(m1, type="link"), y =resd))+ 
+  geom_point(col = "#7fc97f") +
   ylab("Deviance residuals") + xlab("Linear predictor") 
 grid.arrange(r1, r2, r3, nrow = 1)
 
 resp2 <- resid(m2, type = "pearson") 
 resd2 <- resid(m2, type = "deviance")
-r4<- ggplot(m2, aes(sample = resp2)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
-r5<- ggplot(m2, aes(sample = resd2)) + geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
-r6<- ggplot(m2, aes(x = predict(m2, type="link"), y =resd2))+ geom_point(col = "#7fc97f") +
+r4<- ggplot(m2, aes(sample = resp2)) + 
+  geom_point(stat = "qq", color = "#7fc97f") + ylab("Pearson residuals")
+r5<- ggplot(m2, aes(sample = resd2)) + 
+  geom_point(stat = "qq", color = "#7fc97f") + ylab("Deviance residuals")
+r6<- ggplot(m2, aes(x = predict(m2, type="link"), y =resd2)) + 
+  geom_point(col = "#7fc97f") +
   ylab("Deviance residuals") + xlab("Linear predictor") 
+
 grid.arrange(r4, r5, r6, nrow = 1)
 ```
 
@@ -271,9 +281,9 @@ c(m4$deviance, m4$aic)
 
 ```{r GOF, echo = TRUE, eval = TRUE, warning = FALSE, message = FALSE}
 
-chisq <- with(m1, sum((household$Number_Members- fitted.values)^2/fitted.values))
-df <- with(m1, df.residual)
-p <- with(m1, pchisq(chisq, df, lower.tail = FALSE))
+chisq <- with(m2, sum((household$Number_Members- fitted.values)^2/fitted.values))
+df <- with(m2, df.residual)
+p <- with(m2, pchisq(chisq, df, lower.tail = FALSE))
 cat("Chi-square test statistic = ", chisq, "\n")
 cat("df = ", df, "\n")
 cat("p-value = ", p, "\n")

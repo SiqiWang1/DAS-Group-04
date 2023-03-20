@@ -159,17 +159,20 @@ household %>%
   adorn_ns() # To show original counts
 
 # barplot of Number_Members and Householder_Sex
-ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Householder_Sex, fill=Householder_Sex)) + 
+ggplot(household, 
+       aes(x= Number_Members,  y = ..prop.., group=Householder_Sex, fill=Householder_Sex)) + 
   geom_bar(position="dodge", stat="count") +
   labs(y = "Proportion")
 
 # barplot of Number_Members and Electricity 
-ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Electricity, fill=Electricity)) + 
+ggplot(household, 
+       aes(x= Number_Members,  y = ..prop.., group=Electricity, fill=Electricity)) + 
   geom_bar(position="dodge", stat="count") +
   labs(y = "Proportion")
 
 # barplot of Number_Members and Household_Type
-ggplot(household, aes(x= Number_Members,  y = ..prop.., group=Household_Type, fill=Household_Type)) + 
+ggplot(household, 
+       aes(x= Number_Members,  y = ..prop.., group=Household_Type, fill=Household_Type)) + 
   geom_bar(position="dodge", stat="count") +
   labs(y = "Proportion") +
   theme(legend.position = "bottom")
